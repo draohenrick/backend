@@ -1,7 +1,7 @@
 {
   "name": "tonorole-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend para a plataforma de eventos TonoRolê.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -15,7 +15,8 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^7.5.0"
+    "mongoose": "^8.0.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
