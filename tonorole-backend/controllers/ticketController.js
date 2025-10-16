@@ -1,40 +1,100 @@
-const { readDB, writeDB } = require('../utils/db');
-const { v4: uuidv4 } = require('uuid');
+const Ticket = require('../models/Ticket'); // Verifique se o caminho e o nome do modelo estão corretos
+const Event = require('../models/Event');   // Verifique se o caminho e o nome do modelo estão corretos
 
-exports.createTicket = (req, res) => {
-  const { eventId, buyerName } = req.body;
-  if (!eventId || !buyerName) return res.status(400).json({ message: 'eventId and buyerName required' });
-  const db = readDB();
-  const ticket = { id: uuidv4(), eventId, buyerName, ...req.body };
-  db.tickets.push(ticket);
-  writeDB(db);
-  res.status(201).json(ticket);
+// @desc    Criar um novo tipo de ingresso para um evento
+// @route   POST /api/tickets
+// @access  Private (Produtor)
+const createTicket = async (req, res) => {
+  try {
+    const { eventId, name, price, quantity } = req.body;
+
+    // Validação básica
+    if (!eventId || !name || !price || !quantity) {
+      return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios.' });
+    }
+
+    // Verifica se o evento existe
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Evento não encontrado.' });
+    }
+    
+    // TODO: Adicionar verificação para garantir que o usuário logado é o dono do evento
+
+    const newTicket = new Ticket({
+      event: eventId,
+      name,
+      price,
+      quantity,
+    });
+
+    const savedTicket = await newTicket.save();
+    res.status(201).json(savedTicket);
+
+  } catch (error) {
+    res.status(500).json({ message: 'Erro no servidor ao criar ingresso.', error: error.message });
+  }
 };
 
-exports.getTickets = (req, res) => {
-  const db = readDB();
-  res.json(db.tickets);
+// @desc    Listar todos os ingressos de um evento específico
+// @route   GET /api/tickets/event/:eventId
+// @access  Public
+const getTicketsByEvent = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const tickets = await Ticket.find({ event: eventId });
+        
+        if (!tickets) {
+            return res.status(404).json({ message: 'Nenhum ingresso encontrado para este evento.' });
+        }
+
+        res.status(200).json(tickets);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro no servidor ao buscar ingressos.', error: error.message });
+    }
 };
 
-exports.getTicketById = (req, res) => {
-  const db = readDB();
-  const t = db.tickets.find(t => t.id === req.params.id);
-  if (!t) return res.status(404).json({ message: 'Not found' });
-  res.json(t);
+// @desc    Atualizar um ingresso
+// @route   PUT /api/tickets/:id
+// @access  Private (Produtor)
+const updateTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedTicket = await Ticket.findByIdAndUpdate(id, req.body, { new: true });
+
+        if (!updatedTicket) {
+            return res.status(404).json({ message: 'Ingresso não encontrado.' });
+        }
+        
+        res.status(200).json(updatedTicket);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro no servidor ao atualizar ingresso.', error: error.message });
+    }
 };
 
-exports.deleteTicket = (req, res) => {
-  const db = readDB();
-  const idx = db.tickets.findIndex(t => t.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ message: 'Not found' });
-  db.tickets.splice(idx,1);
-  writeDB(db);
-  res.json({ message: 'deleted' });
+// @desc    Deletar um ingresso
+// @route   DELETE /api/tickets/:id
+// @access  Private (Produtor)
+const deleteTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedTicket = await Ticket.findByIdAndDelete(id);
+
+        if (!deletedTicket) {
+            return res.status(404).json({ message: 'Ingresso não encontrado.' });
+        }
+
+        res.status(200).json({ message: 'Ingresso deletado com sucesso.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro no servidor ao deletar ingresso.', error: error.message });
+    }
 };
 
+
+// Exporta todas as funções para serem usadas nas rotas
 module.exports = {
   createTicket,
-  getTickets,
-  getTicketById,
-  deleteTicket
+  getTicketsByEvent,
+  updateTicket,
+  deleteTicket,
 };
