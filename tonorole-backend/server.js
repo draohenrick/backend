@@ -1,29 +1,45 @@
-require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const authRoutes = require('./routes/auth');
-const eventsRoutes = require('./routes/events');
-const ticketsRoutes = require('./routes/tickets');
+const mongoose = require('mongoose');
+const cors = require('cors'); // Pacote para gerenciar permissões
+require('dotenv').config();
+
+// --- Importação das suas rotas ---
+// (Verifique se os nomes dos arquivos estão corretos na sua pasta 'routes')
+const authRoutes = require('./routes/auth'); 
+const eventRoutes = require('./routes/events');
+const ticketRoutes = require('./routes/tickets');
+// Adicione outras rotas se tiver
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 
-const FRONT = process.env.FRONTEND_URL || 'https://tonorole.netlify.app';
+// --- CONFIGURAÇÃO DO CORS ---
+// Opções do CORS para permitir apenas o seu frontend
+const corsOptions = {
+  origin: 'https://tonorole.netlify.app', // Apenas este site pode fazer pedidos
+  optionsSuccessStatus: 200 
+};
 
-app.use(cors({
-  origin: [FRONT, 'https://tonorole.onrender.com'],
-  optionsSuccessStatus: 200
-}));
-app.use(bodyParser.json());
+// --- Middlewares ---
+app.use(cors(corsOptions)); // Aplica a configuração do CORS
+app.use(express.json());   // Para a API entender JSON
 
-// routes
+// --- Conexão com o Banco de Dados ---
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB conectado com sucesso!'))
+  .catch(err => console.error('Erro ao conectar no MongoDB:', err));
+
+// --- Rotas da API ---
+app.get('/', (req, res) => {
+  res.send('API da Plataforma de Eventos TonoRolê no ar!');
+});
+
 app.use('/api/auth', authRoutes);
-app.use('/api/events', eventsRoutes);
-app.use('/api/tickets', ticketsRoutes);
+app.use('/api/events', eventRoutes);
+app..use('/api/tickets', ticketRoutes);
+// Adicione outras rotas se tiver
 
-app.get('/', (req, res) => res.json({ message: 'Tô no Rolê backend running' }));
-
+// --- Iniciar o Servidor ---
 app.listen(PORT, () => {
-  console.log('Server listening on port', PORT);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
