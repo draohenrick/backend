@@ -1,12 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const ticketController = require('../controllers/ticketController');
-const auth = require('../middleware/auth');
 
-// create ticket (no auth required or change as you prefer)
-router.post('/', ticketController.createTicket);
-router.get('/', auth, ticketController.getTickets);
-router.get('/:id', auth, ticketController.getTicketById);
-router.delete('/:id', auth, ticketController.deleteTicket);
+// Importa as funções do controller
+const {
+  createTicket,
+  getTicketsByEvent,
+  updateTicket,
+  deleteTicket,
+} = require('../controllers/ticketController');
+
+// Rota para buscar todos os ingressos de um evento específico
+// GET /api/tickets/event/:eventId
+router.get('/event/:eventId', getTicketsByEvent);
+
+// Rota para criar um novo tipo de ingresso
+// POST /api/tickets
+router.post('/', createTicket);
+
+// Rota para atualizar os detalhes de um ingresso
+// PUT /api/tickets/:id
+router.put('/:id', updateTicket);
+
+// Rota para deletar um ingresso
+// DELETE /api/tickets/:id
+router.delete('/:id', deleteTicket);
 
 module.exports = router;
